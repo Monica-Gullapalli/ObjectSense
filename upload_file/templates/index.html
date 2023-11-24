@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title> Homepage </title>
+    <title>Homepage</title>
 </head>
 <body>
     <center>
@@ -15,12 +15,12 @@
 
         {% if uploaded_image %}
             <h3>Uploaded Image:</h3>
-            <img src="{{ url_for('static', filename='uploaded_images/uploaded_image.jpg') }}" alt="Uploaded Image" style="max-width: 100%;">
+            <img src="{{ url_for('static', filename='uploaded_images/' + uploaded_image) }}" alt="Uploaded Image" style="max-width: 100%;">
         {% endif %}
 
         {% if result_image %}
             <h3>Result Image:</h3>
-            <img src="{{ url_for('static', filename='outputs/result_image.jpg') }}" alt="Result Image" style="max-width: 100%;">
+            <img src="{{ url_for('static', filename='outputs/' + result_image) }}" alt="Result Image" style="max-width: 100%;">
         {% endif %}
     </center>
 </body>
