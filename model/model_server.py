@@ -6,9 +6,16 @@ import torch
 import numpy as np
 from model_utils import load_model, process_prediction, draw_boxes
 from torchvision.transforms import functional as F
+import gridfs
+from flask_pymongo import PyMongo
+import io
+from flask import send_file
 
 app = Flask(__name__)
 CORS(app)
+app.config["MONGO_URI"] = "mongodb://localhost:27017/myDatabase"
+db = PyMongo(app).db
+fs = gridfs.GridFS(db)
 
 # Model configurations
 coco_names = [
@@ -28,18 +35,30 @@ coco_names = [
 
 COLORS = np.random.uniform(0, 255, size=(len(coco_names), 3))
 
-UPLOAD_FOLDER = r'H:\DCSC\ObjectSense\upload_file\static\uploaded_images'
-OUTPUT_FOLDER = r'H:\DCSC\ObjectSense\upload_file\static\outputs'
+UPLOAD_FOLDER = r'E:\DCSC_project\ObjectSense\upload_file\static\uploaded_images'
+OUTPUT_FOLDER = r'E:\DCSC_project\ObjectSense\upload_file\static\outputs'
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
 
 # Load the model once
-model_path = r'H:\DCSC\ObjectSense\model\retina_net.pkl'
+model_path = r'E:\DCSC_project\ObjectSense\model\retina-model.pkl'
 model = load_model(model_path)
 
 # Detection threshold
 detection_threshold = 0.5
+
+# @app.route('/retrieve/<image_id>')
+# def retrieve(image_id):
+#     # Get the image from GridFS using the provided image_id
+#     image_data = fs.get(ObjectId(image_id))
+
+#     # Check if the image data exists
+#     if image_data:
+#         # Send the image file back to the user
+#         return send_file(io.BytesIO(image_data.read()), mimetype='image/png')
+#     else:
+#         return "Image not found"
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -62,11 +81,16 @@ def predict():
     # Save the result image with the received timestamp
     timestamp = request.form.get('timestamp', None)
     if timestamp:
-        result_image_filename = f'{float(timestamp):.0f}_result_image.jpg'
-        result_image_path = os.path.join(app.config['OUTPUT_FOLDER'], result_image_filename)
-        result_image.save(result_image_path)
+        # Convert result image to bytes
+        result_img_byte_array = io.BytesIO()
+        result_image.save(result_img_byte_array, format='PNG')
+        result_img_byte_array = result_img_byte_array.getvalue()
 
-        return jsonify({'result_image': result_image_filename})
+        # Save result image to MongoDB using GridFS
+        result_image_filename = f'{float(timestamp):.0f}_result_image.jpg'
+        result_image_id = fs.put(result_img_byte_array, filename=f'{float(timestamp):.0f}_result_image.png')
+        return jsonify({'result_image_id': str(result_image_id)})
+        
     else:
         return jsonify({'error': 'No timestamp provided'})
 
