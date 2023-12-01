@@ -23,5 +23,8 @@
             <img src="{{ url_for('retrieve', image_id=result_image) }}" alt="Result Image" style="max-width: 100%;">
         {% endif %}
     </center>
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
 </body>
 </html>

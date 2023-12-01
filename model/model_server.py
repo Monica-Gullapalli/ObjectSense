@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from PIL import Image
 import torch
@@ -35,64 +35,50 @@ coco_names = [
 
 COLORS = np.random.uniform(0, 255, size=(len(coco_names), 3))
 
-UPLOAD_FOLDER = r'E:\DCSC_project\ObjectSense\upload_file\static\uploaded_images'
-OUTPUT_FOLDER = r'E:\DCSC_project\ObjectSense\upload_file\static\outputs'
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
-
 # Load the model once
-model_path = r'E:\DCSC_project\ObjectSense\model\retina-model.pkl'
+model_path = os.path.join(os.getcwd(), 'retina_net.pkl')
 model = load_model(model_path)
 
 # Detection threshold
 detection_threshold = 0.5
 
-# @app.route('/retrieve/<image_id>')
-# def retrieve(image_id):
-#     # Get the image from GridFS using the provided image_id
-#     image_data = fs.get(ObjectId(image_id))
-
-#     # Check if the image data exists
-#     if image_data:
-#         # Send the image file back to the user
-#         return send_file(io.BytesIO(image_data.read()), mimetype='image/png')
-#     else:
-#         return "Image not found"
-
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'})
+    try:
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image provided'})
 
-    image = request.files['image']
+        image = request.files['image']
 
-    # Process the image
-    img = Image.open(image).convert('RGB')
-    img_tensor = F.to_tensor(img).unsqueeze(0)
+        # Process the image
+        img = Image.open(image).convert('RGB')
+        img_tensor = F.to_tensor(img).unsqueeze(0)
 
-    # Use the model for predictions
-    with torch.no_grad():
-        boxes, pred_classes = process_prediction(img_tensor, model, detection_threshold)
+        # Use the model for predictions
+        with torch.no_grad():
+            boxes, pred_classes = process_prediction(img_tensor, model, detection_threshold)
 
-    # Process the prediction to draw bounding boxes on the image
-    result_image = draw_boxes(np.array(img), boxes, pred_classes, coco_names, COLORS)
+        # Process the prediction to draw bounding boxes on the image
+        result_image = draw_boxes(np.array(img), boxes, pred_classes, coco_names, COLORS)
 
-    # Save the result image with the received timestamp
-    timestamp = request.form.get('timestamp', None)
-    if timestamp:
-        # Convert result image to bytes
-        result_img_byte_array = io.BytesIO()
-        result_image.save(result_img_byte_array, format='PNG')
-        result_img_byte_array = result_img_byte_array.getvalue()
+        # Save the result image with the received timestamp
+        timestamp = request.form.get('timestamp', None)
+        if timestamp:
+            # Convert result image to bytes
+            result_img_byte_array = io.BytesIO()
+            result_image.save(result_img_byte_array, format='PNG')
+            result_img_byte_array = result_img_byte_array.getvalue()
 
-        # Save result image to MongoDB using GridFS
-        result_image_filename = f'{float(timestamp):.0f}_result_image.jpg'
-        result_image_id = fs.put(result_img_byte_array, filename=f'{float(timestamp):.0f}_result_image.png')
-        return jsonify({'result_image_id': str(result_image_id)})
+            # Save result image to MongoDB using GridFS
+            result_image_id = fs.put(result_img_byte_array, filename=f'{float(timestamp):.0f}_result_image.png')
+            return jsonify({'result_image_id': str(result_image_id)})
+            
+        else:
+            return jsonify({'error': 'No timestamp provided'})
         
-    else:
-        return jsonify({'error': 'No timestamp provided'})
+    except Exception as e:
+        app.logger.error(f"An error occurred: {e}")
+        return jsonify({'error': 'An internal server error occurred'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

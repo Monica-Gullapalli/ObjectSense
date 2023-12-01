@@ -1,5 +1,5 @@
-import os
 import time
+import logging
 import requests
 from flask import Flask, render_template, request, send_from_directory
 from PIL import Image
@@ -7,23 +7,13 @@ import gridfs
 from flask_pymongo import PyMongo
 import io
 from flask import send_file
-from bson import ObjectId  # Import ObjectId to handle ObjectIds in MongoDB
+from bson import ObjectId
 
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/myDatabase"
 db = PyMongo(app).db
 fs = gridfs.GridFS(db)
-
-UPLOAD_FOLDER = 'static/uploaded_images'
-OUTPUT_FOLDER = 'static/outputs'
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['OUTPUT_FOLDER'] = OUTPUT_FOLDER
-
-# Create the required directories
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs(app.config['OUTPUT_FOLDER'], exist_ok=True)
 
 def generate_unique_filename():
     # Use timestamp for unique filenames
@@ -44,15 +34,6 @@ def retrieve(image_id):
     else:
         return "Image not found"
 
-    # image_data = fs.get(ObjectId(image_id))
-
-    # # Check if the image data exists
-    # if image_data:
-    #     # Send the image file back to the user
-    #     return send_file(io.BytesIO(image_data.read()), mimetype='image/png')
-    # else:
-    #     return "Image not found"
-
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -62,12 +43,8 @@ def index():
         # Generate unique filenames using timestamp
         timestamp, uploaded_image_filename, result_image_filename = generate_unique_filename()
 
-        # Save the uploaded image
-        # uploaded_image_path = os.path.join(app.config['UPLOAD_FOLDER'], uploaded_image_filename)
-        # image.save(uploaded_image_path)
         # Process the image
         img = Image.open(image).convert('RGB')
-
 
         # Convert image to bytes
         img_byte_array = io.BytesIO()
@@ -81,19 +58,21 @@ def index():
         model_server_url = 'http://127.0.0.1:5001/predict'  # Adjust the URL accordingly
         files = {'image': img_byte_array}
         data = {'timestamp': timestamp}
-        response = requests.post(model_server_url, files=files, data=data)
 
         try:
+            response = requests.post(model_server_url, files=files, data=data)
+            response.raise_for_status()  # Raises HTTPError if the HTTP request returned an unsuccessful status code
             result_image_path = response.json().get('result_image_id', None)
-            print(result_image_path)
-        except requests.exceptions.JSONDecodeError as e:
-            print(f"Error decoding JSON response: {e}")
+            message = "Image uploaded successfully."
+
+        except Exception as e:
+            logging.exception(f"An error occurred: {e}")
             result_image_path = None
+            message = "An error occurred while processing the image."
 
+        return render_template('index.html', uploaded_image=uploaded_image_id, result_image=result_image_path, message=message)
 
-        return render_template('index.html', uploaded_image=uploaded_image_id, result_image=result_image_path)
-
-    return render_template('index.html', uploaded_image=None, result_image=None)
+    return render_template('index.html', uploaded_image=None, result_image=None, message=None)
 
 @app.route('/uploads/<filename>')
 def uploaded_image(filename):

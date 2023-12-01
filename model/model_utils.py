@@ -1,3 +1,4 @@
+from datetime import datetime
 import torch
 import cv2
 from PIL import Image
@@ -8,7 +9,7 @@ def load_model(model_path):
     model = retinanet_resnet50_fpn(weights=None)
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     model.eval()
-    return model
+    return model       
 
 def process_prediction(image, model, detection_threshold):
     with torch.no_grad():
