@@ -9,7 +9,6 @@ from torchvision.transforms import functional as F
 import gridfs
 from flask_pymongo import PyMongo
 import io
-from flask import send_file
 
 app = Flask(__name__)
 CORS(app)

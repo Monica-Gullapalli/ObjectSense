@@ -15,13 +15,6 @@ app.config["MONGO_URI"] = "mongodb://localhost:27017/myDatabase"
 db = PyMongo(app).db
 fs = gridfs.GridFS(db)
 
-def generate_unique_filename():
-    # Use timestamp for unique filenames
-    timestamp = time.time()
-    uploaded_image = f'{timestamp:.0f}_uploaded.jpg'
-    result_image = f'{timestamp:.0f}_result_image.jpg'
-    return timestamp, uploaded_image, result_image
-
 @app.route('/retrieve/<image_id>')
 def retrieve(image_id):
     # Get the image from GridFS using the provided image_id
@@ -39,9 +32,8 @@ def retrieve(image_id):
 def index():
     if request.method == 'POST' and 'image' in request.files:
         image = request.files['image']
-
-        # Generate unique filenames using timestamp
-        timestamp, uploaded_image_filename, result_image_filename = generate_unique_filename()
+        
+        timestamp = time.time()
 
         # Process the image
         img = Image.open(image).convert('RGB')

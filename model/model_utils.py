@@ -1,4 +1,3 @@
-from datetime import datetime
 import torch
 import cv2
 from PIL import Image
