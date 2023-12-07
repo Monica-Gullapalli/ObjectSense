@@ -1,28 +1,36 @@
+import os
 import time
 import logging
 import requests
-from flask import Flask, render_template, request, send_from_directory
+from flask import Flask, render_template, request, send_from_directory, send_file
 from PIL import Image
 import gridfs
 from flask_pymongo import PyMongo
 import io
-from flask import send_file
 from bson import ObjectId
-
+import redis
 
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb://localhost:27017/myDatabase"
 db = PyMongo(app).db
 fs = gridfs.GridFS(db)
+redis_host = os.getenv("REDIS_HOST") or "localhost"
+redis_client = redis.Redis(host=redis_host, decode_responses=True)
+
+
+def log(message):
+    redis_client.lpush("logging", message)
+
+
+def send_to_model(img):
+    print(img)
+    redis_client.lpush('queue', img)
+
 
 @app.route('/retrieve/<image_id>')
 def retrieve(image_id):
-    # Get the image from GridFS using the provided image_id
     image_data = fs.get(ObjectId(image_id))
-
-    # Check if the image data exists
     if image_data:
-        # Send the image file back to the user
         return send_file(io.BytesIO(image_data.read()), mimetype='image/png')
     else:
         return "Image not found"
@@ -32,7 +40,6 @@ def retrieve(image_id):
 def index():
     if request.method == 'POST' and 'image' in request.files:
         image = request.files['image']
-        
         timestamp = time.time()
 
         # Process the image
@@ -44,16 +51,18 @@ def index():
         img_byte_array = img_byte_array.getvalue()
 
         # Save uploaded image to GridFS
-        uploaded_image_id = fs.put(img_byte_array, filename=f'{float(timestamp):.0f}_uploaded_image.png')
+        uploaded_image_id = fs.put(img_byte_array, filename=f'{int(timestamp)}_uploaded_image.png')
 
-        # Send timestamp and image to model server
+        # Send timestamp and image to the model server
         model_server_url = 'http://127.0.0.1:5001/predict'  # Adjust the URL accordingly
-        files = {'image': img_byte_array}
         data = {'timestamp': timestamp}
 
+        # Push to the Redis queue
+        send_to_model(img=str(uploaded_image_id))
+
         try:
-            response = requests.post(model_server_url, files=files, data=data)
-            response.raise_for_status()  # Raises HTTPError if the HTTP request returned an unsuccessful status code
+            response = requests.post(model_server_url, data=data)
+            response.raise_for_status()
             result_image_path = response.json().get('result_image_id', None)
             message = "Image uploaded successfully."
 
@@ -62,13 +71,16 @@ def index():
             result_image_path = None
             message = "An error occurred while processing the image."
 
-        return render_template('index.html', uploaded_image=uploaded_image_id, result_image=result_image_path, message=message)
+        return render_template('index.html', uploaded_image=uploaded_image_id, result_image=result_image_path,
+                               message=message)
 
     return render_template('index.html', uploaded_image=None, result_image=None, message=None)
+
 
 @app.route('/uploads/<filename>')
 def uploaded_image(filename):
     return send_from_directory(app.root_path, filename)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

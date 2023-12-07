@@ -1,8 +1,14 @@
+import os
+import redis
 import torch
 import cv2
 from PIL import Image
 from torchvision.models.detection import retinanet_resnet50_fpn
 from torchvision.transforms import functional as F
+
+redisHost = os.getenv("REDIS_HOST") or "localhost"
+redisPort = os.getenv("REDIS_PORT") or 6379
+redisClient = redis.StrictRedis(host=redisHost, port=redisPort, db=0)
 
 def load_model(model_path):
     model = retinanet_resnet50_fpn(weights=None)
