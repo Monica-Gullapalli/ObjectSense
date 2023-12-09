@@ -61,7 +61,7 @@ def index():
         send_to_model(img=str(uploaded_image_id))
 
         try:
-            response = requests.post(model_server_url, data=data)
+            response = requests.post(model_server_url, data=data, timeout=120)
             response.raise_for_status()
             result_image_path = response.json().get('result_image_id', None)
             message = "Image uploaded successfully."

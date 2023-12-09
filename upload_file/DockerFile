@@ -1,0 +1,13 @@
+FROM python:3.11.4
+
+WORKDIR /upload_file
+
+COPY app.py /upload_file/
+
+COPY templates /upload_file/
+
+COPY requirements.txt /upload_file/
+
+RUN pip3 install -r requirements.txt
+
+ENTRYPOINT [ "python", "app.py" ]

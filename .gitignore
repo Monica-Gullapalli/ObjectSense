@@ -1,3 +1,5 @@
 __pycache__
 model/retina_net.pkl
 test.py
+model/requirements.txt
+upload_file/requirements.txt
