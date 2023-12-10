@@ -13,7 +13,7 @@ from bson import ObjectId
 
 app = Flask(__name__)
 CORS(app)
-app.config["MONGO_URI"] = "mongodb://localhost:27017/myDatabase"
+app.config["MONGO_URI"] = "mongodb://mongo:27017/myDatabase"
 db = PyMongo(app).db
 fs = gridfs.GridFS(db)
 
