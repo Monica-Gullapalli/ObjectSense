@@ -3,87 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Split Screen Example</title>
+  <title>ObjectSense</title>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
   <style>
-    body, html {
-      height: 100%;
-      margin: 0;
+    body {
+        background-color: #343a40; /* Dark gray background color */
+        color: #fff; /* Text color */
     }
 
     .container {
-      display: flex;
-      height: 100vh;
+        margin-top: 50px;
     }
 
-    .left-pane {
-      flex: 30%;
-      background-color: #fff36b;
-      padding: 20px;
+    .custom-form {
+        text-align: center;
+        padding: 20px;
+        background-color: #343a40; /* Dark gray background color for the form */
+        border-radius: 10px;
     }
 
-    .right-pane {
-      flex: 70%;
-      padding: 20px;
-      background-color:#c0ebe6;
+    .custom-form:hover {
+        background-color: #6f42c1; /* Purple background color on hover */
     }
-        /* Style the image inside the centered container, if needed */
-        .centered img {
-      width: 300px;
-      height: 300px;
-      border-radius: 50%;
-  </style>
+
+    .image-container {
+        margin-top: 20px;
+        overflow: hidden;
+    }
+
+    .image-container img {
+        max-width: 100%;
+        height: auto;
+    }
+</style>
+
 </head>
-<body>
+<body>          
   <div class="container">
-    <div class="left-pane">
-      <!-- Content for the left pane (30%) -->
-      <div class="split left">
-          <div class="centered">
-            <center>
-            <img class = "img" src="https://www.zibtek.com/blog/content/images/2021/05/image-3-2.png" alt="Heart">
-            
-              <h1> Object Recognition</h1>
+    <div class="row">
+      <div class="col-md-12 custom-form">
+        <h2>Upload an Image</h2>
 
-              <p> Object recognition consists of recognizing, identifying, and positioning objects in images. There are four main tasks during object recognition. These are classification, tagging, detection, and segmentation.
-‍</p>
-            </center>
-            
+        <form action="/" method="POST" enctype="multipart/form-data">
+          <label for="image">Select Image:</label>
+          <input type="file" id="image" name="image" accept="image/*" class="form-control">
+          <br>
+          <input type="submit" class="btn btn-light" value="Upload">
+        </form>
+      </div>
+    </div>
+
+    <div class="row image-container">
+      {% if uploaded_image %}
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h3 class="card-title">Uploaded Image</h3>
+              <img src="{{ url_for('retrieve', image_id=uploaded_image) }}" alt="Uploaded Image" class="img-fluid">
+            </div>
           </div>
         </div>
-    </div>
-    <div class="right-pane">
-      <!-- Content for the right pane (70%) -->
-      <div class="split right">
-          <div class="centered">
-          
-          <center>
-            <h2>Upload an Image</h2>
-    
-            <form action="/" method="POST" enctype="multipart/form-data">
-                <label for="image">Select Image:</label>
-                <input type="file" id="image" name="image" accept="image/*">
-                <br>
-                <input type="submit" value="Upload">
-            </form>
-    
-            {% if uploaded_image %}
-                <h3>Uploaded Image:</h3>
-                <img src="{{ url_for('retrieve', image_id=uploaded_image) }}" alt="Uploaded Image" style="max-width: 100%;">
-            {% endif %}
-    
-            {% if result_image %}
-                <h3>Result Image:</h3>
-                <img src="{{ url_for('retrieve', image_id=result_image) }}" alt="Result Image" style="max-width: 100%;">
-            {% endif %}
-        </center>
-        {% if message %}
-            <p>{{ message }}</p>
-        {% endif %}
-            
+      {% endif %}
+
+      {% if result_image %}
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h3 class="card-title">Result Image</h3>
+              <img src="{{ url_for('retrieve', image_id=result_image) }}" alt="Result Image" class="img-fluid">
+            </div>
           </div>
         </div>
-
+      {% endif %}
     </div>
+
+    {% if message %}
+      <div class="row">
+        <div class="col-md-12">
+          <div class="alert alert-info" role="alert">
+            {{ message }}
+          </div>
+        </div>
+      </div>
+    {% endif %}
   </div>
+
+  <!-- Bootstrap JS and Popper.js (optional) -->
+  <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 </body>
 </html>

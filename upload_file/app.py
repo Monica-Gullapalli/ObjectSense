@@ -11,10 +11,10 @@ from bson import ObjectId
 import redis
 
 app = Flask(__name__)
-app.config["MONGO_URI"] = "mongodb://localhost:27017/myDatabase"
+app.config["MONGO_URI"] = "mongodb://mongo:27017/myDatabase"
 db = PyMongo(app).db
 fs = gridfs.GridFS(db)
-redis_host = os.getenv("REDIS_HOST") or "localhost"
+redis_host = os.getenv("REDIS_HOST") or "redis-stack"
 redis_client = redis.Redis(host=redis_host, decode_responses=True)
 
 
@@ -38,8 +38,18 @@ def retrieve(image_id):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    if request.method == 'POST' and 'image' in request.files:
+    if request.method == 'POST':
+        if 'image' not in request.files:
+            # No image selected
+            return render_template('index.html', uploaded_image=None, result_image=None,
+                                   message="Please select an image to upload.")
+
         image = request.files['image']
+        if image.filename == '':
+            # Empty file name indicates no file selected
+            return render_template('index.html', uploaded_image=None, result_image=None,
+                                   message="Please select an image to upload.")
+
         timestamp = time.time()
 
         # Process the image
@@ -54,7 +64,7 @@ def index():
         uploaded_image_id = fs.put(img_byte_array, filename=f'{int(timestamp)}_uploaded_image.png')
 
         # Send timestamp and image to the model server
-        model_server_url = 'http://127.0.0.1:5001/predict'  # Adjust the URL accordingly
+        model_server_url = 'http://model_server:5001/predict'  # Adjust the URL accordingly
         data = {'timestamp': timestamp}
 
         # Push to the Redis queue
@@ -64,7 +74,7 @@ def index():
             response = requests.post(model_server_url, data=data, timeout=120)
             response.raise_for_status()
             result_image_path = response.json().get('result_image_id', None)
-            message = "Image uploaded successfully."
+            message = "Image processed successfully."
 
         except Exception as e:
             logging.exception(f"An error occurred: {e}")
@@ -76,11 +86,10 @@ def index():
 
     return render_template('index.html', uploaded_image=None, result_image=None, message=None)
 
-
 @app.route('/uploads/<filename>')
 def uploaded_image(filename):
     return send_from_directory(app.root_path, filename)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000, threaded=True)
