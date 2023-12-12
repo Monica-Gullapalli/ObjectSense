@@ -29,7 +29,7 @@ Make sure you have the following dependencies installed:
 
 ## Working
 
-The `app.py` script serves as the main component of the ObjectSense web application. Here's a summary of its functionality:
+The `app.py` script serves as the main component of the ObjectSense web application.
 
 ### 1. Initialization and Configuration
 
@@ -53,9 +53,8 @@ The root route handles both GET and POST requests. It processes uploaded images,
 
 This route serves static files, specifically uploaded images, from the application's root directory.
 
-### 4. Running the Application
 
-The `model_server.py` script defines a Flask application for a model server that processes images using a pre-trained object detection model. Here's a summary of its working:
+The `model_server.py` script defines a Flask application for a model server that processes images using a pre-trained object detection model.
 
 ### 1. Initialization and Configuration
 
