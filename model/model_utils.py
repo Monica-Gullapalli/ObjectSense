@@ -6,17 +6,22 @@ from PIL import Image
 from torchvision.models.detection import retinanet_resnet50_fpn
 from torchvision.transforms import functional as F
 
-redisHost = os.getenv("REDIS_HOST") or "redis-stack"
+# Get Redis host and port from environment variables or use default values
+redisHost = os.getenv("REDIS_HOST") or "redis-stack" #uses the container name of the redis container
 redisPort = os.getenv("REDIS_PORT") or 6379
+
+# Create a Redis client
 redisClient = redis.StrictRedis(host=redisHost, port=redisPort, db=0)
 
 def load_model(model_path):
+    """Load the RetinaNet model from the specified path."""
     model = retinanet_resnet50_fpn(weights=None)
     model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     model.eval()
     return model       
 
 def process_prediction(image, model, detection_threshold):
+    """Process the image using the RetinaNet model and filter predictions based on the detection threshold."""
     with torch.no_grad():
         outputs = model(image)
 
@@ -24,6 +29,7 @@ def process_prediction(image, model, detection_threshold):
     boxes = outputs[0]['boxes'].detach().cpu().numpy()
     labels = outputs[0]['labels'].cpu().numpy()
 
+    # Filter predictions based on the detection threshold
     thresholded_preds_indices = [i for i, score in enumerate(scores) if score > detection_threshold]
     filtered_boxes = boxes[thresholded_preds_indices]
     filtered_classes = labels[thresholded_preds_indices]
@@ -31,6 +37,7 @@ def process_prediction(image, model, detection_threshold):
     return filtered_boxes, filtered_classes
 
 def draw_boxes(image, boxes, classes, coco_names, colors):
+    """Draw bounding boxes on the image based on the model predictions."""
     image_np = image.copy()
 
     for i, box in enumerate(boxes):
