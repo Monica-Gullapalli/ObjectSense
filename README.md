@@ -82,10 +82,6 @@ The `model_server.py` script defines a Flask application for a model server that
 - Establishes a connection to a Redis server for communication between the model server and other components.
 - Listens for image IDs from the Redis queue (`"queue"`).
 
-### 5. Running the Model Server
-
-- Checks if the script is the main script and starts the Flask application on `0.0.0.0:5001`.
-
 ## Usage
 
 To run the ObjectSense application, follow the steps below. Ensure that you have Docker installed on your machine.
