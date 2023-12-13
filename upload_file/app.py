@@ -67,7 +67,7 @@ def index():
         uploaded_image_id = fs.put(img_byte_array, filename=f'{int(timestamp)}_uploaded_image.png')
 
         # Send timestamp and image to the model server
-        model_server_url = 'http://model_server:5001/predict'  # Adjust the URL accordingly
+        model_server_url = 'http://model-server:5001/predict'  # Adjust the URL accordingly
         data = {'timestamp': timestamp}
 
         # Push to the Redis queue

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: upload-file
+  labels:
+    app: upload-file
+spec:
+  type: NodePort
+  ports:
+    - protocol: "TCP"
+      port: 5000
+      targetPort: 5000
+  selector:
+    app: upload-file
