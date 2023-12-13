@@ -2,6 +2,11 @@
 
 ObjectSense is a web application that allows users to upload images for processing by a machine learning model. It utilizes Flask for the web interface, MongoDB for image storage, Redis for communication between components, and communicates with a separate model server for image processing.
 
+# Team Members:
+- Yash Panchal
+- Aman Sheth
+- Monica Gullapalli
+
 ## Table of Contents
 1. [Requirements](#requirements)
 2. [Installation](#installation)
